@@ -27,7 +27,7 @@ public class AdministradorServicoTest
 
 
     [TestMethod]
-    public void TestandoSalvarAdministrador()
+    public void Incluir()
     {
         // Arrange
         var context = CriarContextoDeTeste();
@@ -48,7 +48,7 @@ public class AdministradorServicoTest
     }
 
     [TestMethod]
-    public void TestandoBuscaPorId()
+    public void BuscarPorId()
     {
         // Arrange
         var context = CriarContextoDeTeste();
@@ -67,5 +67,52 @@ public class AdministradorServicoTest
 
         // Assert
         Assert.AreEqual(1, admDoBanco?.Id);
+    }
+    [TestMethod]
+    public void Atualizar()
+    {
+        //Arrange
+        var context = CriarContextoDeTeste();
+        context.Database.ExecuteSqlRaw("TRUNCATE TABLE Administradores");
+
+        var adm = new Administrador();
+        adm.Email = "teste@teste.com";
+        adm.Senha = "teste";
+        adm.Perfil = "0";
+        var administradorServico = new AdministradorServico(context);
+        administradorServico.Incluir(adm);
+
+        // Act
+        adm.Email = "administrador@teste.com";
+        adm.Senha = "123456";
+        adm.Perfil = "1";
+        administradorServico.Atualizar(adm);
+        var admDoBanco = administradorServico.BuscaPorId(adm.Id);
+
+        //Assert
+        Assert.AreEqual("administrador@teste.com",admDoBanco?.Email);
+        Assert.AreEqual("123456",admDoBanco?.Senha);
+        Assert.AreEqual("1",admDoBanco?.Perfil);
+    }
+        [TestMethod]
+    public void Apagar()
+    {
+        //Arrange
+        var context = CriarContextoDeTeste();
+        context.Database.ExecuteSqlRaw("TRUNCATE TABLE Administradores");
+
+        var adm = new Administrador();
+        adm.Email = "teste@teste.com";
+        adm.Senha = "teste";
+        adm.Perfil = "0";
+        var administradorServico = new AdministradorServico(context);
+        administradorServico.Incluir(adm);
+
+        //Act      
+        administradorServico.Apagar(adm);
+        var admDoBanco = administradorServico.BuscaPorId(adm.Id);
+
+        //Assert
+        Assert.AreEqual(null,admDoBanco?.Id);
     }
 }

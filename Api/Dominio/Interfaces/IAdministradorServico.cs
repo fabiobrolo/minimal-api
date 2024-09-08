@@ -8,6 +8,8 @@ public interface IAdministradorServico
 {
     Administrador? Login(LoginDTO loginDTO);
     Administrador Incluir(Administrador administrador);
+    void Atualizar(Administrador administrador);
+    void Apagar(Administrador administrador);
     Administrador? BuscaPorId(int id);
     List<Administrador> Todos(int? pagina);
 }

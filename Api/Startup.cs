@@ -132,6 +132,24 @@ public class Startup
                 return new JwtSecurityTokenHandler().WriteToken(token);
             }
 
+            ErrosDeValidacao validaAdmDTO(AdministradorDTO administradorDTO)
+            {
+                var validacao = new ErrosDeValidacao{
+                    Mensagens = new List<string>()
+                };
+
+                if(string.IsNullOrEmpty(administradorDTO.Email))
+                    validacao.Mensagens.Add("Email não pode ser vazio");
+                if(string.IsNullOrEmpty(administradorDTO.Senha))
+                    validacao.Mensagens.Add("Senha não pode ser vazia");
+                if(administradorDTO.Perfil == null)
+                    validacao.Mensagens.Add("Perfil não pode ser vazio");
+                if(!Enum.IsDefined(typeof(Perfil),administradorDTO.Perfil.ToString()))
+                    validacao.Mensagens.Add("O valor de perfil não existe. Valores possiveis sao 0 (adm) e 1 (editor).");
+
+                return validacao;
+            }
+
             endpoints.MapPost("/administradores/login", ([FromBody] LoginDTO loginDTO, IAdministradorServico administradorServico) => {
                 var adm = administradorServico.Login(loginDTO);
                 if(adm != null)
@@ -179,17 +197,7 @@ public class Startup
             .WithTags("Administradores");
 
             endpoints.MapPost("/administradores", ([FromBody] AdministradorDTO administradorDTO, IAdministradorServico administradorServico) => {
-                var validacao = new ErrosDeValidacao{
-                    Mensagens = new List<string>()
-                };
-
-                if(string.IsNullOrEmpty(administradorDTO.Email))
-                    validacao.Mensagens.Add("Email não pode ser vazio");
-                if(string.IsNullOrEmpty(administradorDTO.Senha))
-                    validacao.Mensagens.Add("Senha não pode ser vazia");
-                if(administradorDTO.Perfil == null)
-                    validacao.Mensagens.Add("Perfil não pode ser vazio");
-
+                var validacao = validaAdmDTO(administradorDTO);
                 if(validacao.Mensagens.Count > 0)
                     return Results.BadRequest(validacao);
                 
@@ -211,10 +219,44 @@ public class Startup
             .RequireAuthorization()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Adm" })
             .WithTags("Administradores");
+
+            endpoints.MapPut("/administradores/{id}", ([FromRoute] int id, AdministradorDTO administradorDTO, IAdministradorServico administradorServico) => {
+                var administrador = administradorServico.BuscaPorId(id);
+                if(administrador == null) return Results.NotFound();
+                
+                var validacao = validaAdmDTO(administradorDTO);
+                if(validacao.Mensagens.Count > 0)
+                    return Results.BadRequest(validacao);
+                
+                administrador.Email = administradorDTO.Email;
+                administrador.Perfil = administradorDTO.Perfil.ToString() ?? null;
+                administrador.Senha = administradorDTO.Senha;
+
+                administradorServico.Atualizar(administrador);
+
+                return Results.Ok(administrador);
+            })
+            .RequireAuthorization()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Adm" })
+            .WithTags("Administradores");
+
+            endpoints.MapDelete("/administradores/{id}", ([FromRoute] int id, IAdministradorServico administradorServico) => {
+                var administrador = administradorServico.BuscaPorId(id);
+                if(administrador == null) return Results.NotFound();
+                //TODO: nao permitir apagar o registro se for o mesmo que foi logado
+                administradorServico.Apagar(administrador);
+
+                return Results.NoContent();
+            })
+            .RequireAuthorization()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Adm" })
+            .WithTags("Administradores");
+
+
             #endregion
 
             #region Veiculos
-            ErrosDeValidacao validaDTO(VeiculoDTO veiculoDTO)
+            ErrosDeValidacao validaVeiculoDTO(VeiculoDTO veiculoDTO)
             {
                 var validacao = new ErrosDeValidacao{
                     Mensagens = new List<string>()
@@ -230,10 +272,10 @@ public class Startup
                     validacao.Mensagens.Add("Veículo muito antigo, aceito somete anos superiores a 1950");
 
                 return validacao;
-            }
+            };
 
             endpoints.MapPost("/veiculos", ([FromBody] VeiculoDTO veiculoDTO, IVeiculoServico veiculoServico) => {
-                var validacao = validaDTO(veiculoDTO);
+                var validacao = validaVeiculoDTO(veiculoDTO);
                 if(validacao.Mensagens.Count > 0)
                     return Results.BadRequest(validacao);
                 
@@ -269,7 +311,7 @@ public class Startup
                 var veiculo = veiculoServico.BuscaPorId(id);
                 if(veiculo == null) return Results.NotFound();
                 
-                var validacao = validaDTO(veiculoDTO);
+                var validacao = validaVeiculoDTO(veiculoDTO);
                 if(validacao.Mensagens.Count > 0)
                     return Results.BadRequest(validacao);
                 

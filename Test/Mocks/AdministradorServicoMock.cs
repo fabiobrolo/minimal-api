@@ -34,6 +34,19 @@ public class AdministradorServicoMock : IAdministradorServico
         return administrador;
     }
 
+    public void Apagar(Administrador administrador)
+    {
+        administradores.Remove(administrador);
+    }
+
+     public void Atualizar(Administrador administrador)
+    {
+        var adm = administradores.Find(a => a.Id == administrador.Id);
+        adm.Email = administrador.Email;
+        adm.Perfil = administrador.Perfil;
+        adm.Senha = administrador.Senha;
+    }
+
     public Administrador? Login(LoginDTO loginDTO)
     {
         return administradores.Find(a => a.Email == loginDTO.Email && a.Senha == loginDTO.Senha);

@@ -26,6 +26,18 @@ public class AdministradorServico : IAdministradorServico
         return administrador;
     }
 
+    public void Apagar(Administrador administrador)
+    {
+        _contexto.Administradores.Remove(administrador);
+        _contexto.SaveChanges();
+    }
+
+    public void Atualizar(Administrador administrador)
+    {
+        _contexto.Administradores.Update(administrador);
+        _contexto.SaveChanges();
+    }
+
     public Administrador? Login(LoginDTO loginDTO)
     {
         var adm = _contexto.Administradores.Where(a => a.Email == loginDTO.Email && a.Senha == loginDTO.Senha).FirstOrDefault();
@@ -43,4 +55,6 @@ public class AdministradorServico : IAdministradorServico
 
         return query.ToList();
     }
+
+    
 }
